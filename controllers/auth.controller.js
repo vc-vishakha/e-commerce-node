@@ -46,7 +46,7 @@ exports.registerUser = async function login(req, res) {
         await user.save();
 
         const mailOptions = {
-            from: '"My Company" <vishakha.tak@ics-global.in>', // sender address
+            from: `"My Company" <${process.env.MAILER_EMAIL}>`, // sender address
             template: "email", // the name of the template file, i.e., email.handlebars
             to: user.email,
             subject: `Welcome to My Company, ${user.name}`,
