@@ -59,3 +59,20 @@ exports.getProductList = async function getProduct(req, res) {
         });
     }
 };
+
+exports.getProductDetail = async function getProduct(req, res) {
+    try {
+        const productDetail = await Product.findById({ _id: req.params.id });
+        res.status(200).send({
+            message: "Product detail get successfully!",
+            data: productDetail,
+        });
+    } catch (error) {
+        res.status(400).send({
+            message: "Bad request",
+            error: [error],
+        });
+    }
+};
+
+
