@@ -7,6 +7,6 @@ const authJWT = require("../middleware/auth-validator");
 
 
 router.use('/', auth);
-router.use('/product', product);
+router.use('/product', authJWT.authenticateToken, product);
 router.use('/user', authJWT.authenticateToken, user);
 module.exports = router;

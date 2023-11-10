@@ -1,10 +1,5 @@
 const mongoose = require('mongoose');
-const subImageSchema = new mongoose.Schema({
-    link: {
-        type: String,
-        required: true
-    },
-});
+
 const ProductSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -18,7 +13,14 @@ const ProductSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    images: subImageSchema,
+    images: [
+        {
+            link: {
+                type: String,
+                required: true
+            }
+        }
+    ],
 });
 
 const Product = mongoose.model("Product", ProductSchema);
