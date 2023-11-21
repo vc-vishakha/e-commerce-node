@@ -12,6 +12,14 @@ exports.loginUser = async function login(req, res) {
         if (!userData) {
             throw err;
         }
+        if (!userData.isVerified) {
+            return res.status(401).send({
+                message: "Bad request",
+                error: [{
+                    message: "Please verify your account to use further.",
+                }],
+            });
+        }
         const payload = {
             id: userData._id,
             name: userData.name,
@@ -41,7 +49,19 @@ exports.loginUser = async function login(req, res) {
 
 exports.registerUser = async function login(req, res) {
     try {
-        const user = new User(req.body);
+        let existingUser = await User.findOne({
+            email: req.body.email,
+        });
+        if (existingUser) {
+            return res.status(400).send({
+                message: "Bad request",
+                error: [{
+                    message: "User already exists",
+                }],
+            });
+        }
+        const verificationCode = Math.random().toString(36).slice(2); // random string for verification code
+        const user = new User({ ...req.body, isVerified: false, verificationCode });
 
         await user.save();
 
@@ -55,7 +75,10 @@ exports.registerUser = async function login(req, res) {
                 company: 'my company',
                 link: `http://localhost:4300/verify/${user._id}`
             },
-            html: `<p>Click here to verify <a href="http://localhost:4300/verify/${user._id}">Click</a></p>`
+            html: `
+            <h1>Dear ${user.name}, Welcome to My Company </h1>
+            <p>We are glad to have you on board!</p>
+            <p>Click here to verify your account <a href="http://localhost:4300/verify/${verificationCode}">Click</a></p>`
         };
         try {
             transporter.sendMail(mailOptions, function (error, info) {
@@ -76,6 +99,35 @@ exports.registerUser = async function login(req, res) {
         } catch (error) {
             console.log(`Nodemailer error sending email to ${user.email}`, error);
         }
+    } catch (error) {
+        res.status(400).send({
+            message: "Bad request",
+            error: [error],
+        });
+    }
+};
+
+exports.verifyUser = async function login(req, res) {
+    try {
+        const { verificationCode } = req.params;
+
+        const user = await User.findOne({ verificationCode });
+
+        if (!user) {
+            return res.status(404).send({
+                message: "User not found or Token invalid",
+                error: [{
+                    message: "Invalid verification code",
+                }],
+            });
+        }
+
+        user.isVerified = true;
+        user.verificationCode = null;
+        await user.save();
+        res.status(200).send({
+            message: "Account verified successfully!"
+        })
     } catch (error) {
         res.status(400).send({
             message: "Bad request",
